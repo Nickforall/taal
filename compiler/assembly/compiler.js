@@ -66,7 +66,7 @@ class Compiler {
 
 		this.image.addMainLine('; printing expression result from above');
 		this.image.addMainLine('pop rsi');
-		this.image.addMainLine('add rsp, 16', 'align stack with 16bits');
+		this.image.addMainLine('and rsp, -16', 'align stack with 16bits');
 		this.image.addMainLine('mov rdi, print_digit_instr', 'preset constant string to print numbers');	
 		this.image.addMainLine('call _printf');
 	}
