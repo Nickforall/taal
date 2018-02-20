@@ -4,6 +4,7 @@ global.TAAL_START_COMPILE_DATE = Date.now();
 global.TAAL_CONFIG = {
 	debug: false,
 	preserveTemp: false,
+	skipOptimization: false
 };
 
 const Taal = require('./taal');
@@ -16,6 +17,7 @@ program.version('0.1.0')
 	.option('-o, --output [name]', 'Output file name')
 	.option('-d, --debug', 'Whether we push all kinds of gibberish to stdout when compiling')
 	.option('-t, --temporary', 'Preverses the temporary assembly files')
+	.option('--skip-optimization', 'Skips optimization steps')	
 	.parse(process.argv);
 
 if(program.args.length < 1) {
@@ -25,6 +27,7 @@ if(program.args.length < 1) {
 }
 
 global.TAAL_CONFIG.debug = program.debug;
+global.TAAL_CONFIG.skipOptimization = program.skipOptimization;
 global.TAAL_CONFIG.preserveTemp = program.temporary;
 
 Taal.compileFile(

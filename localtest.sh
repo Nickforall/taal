@@ -1,1 +1,1 @@
-node index.js examples/print.tl -d && ./out/executable
+node index.js examples/print.tl --skip-optimization $1 && ./out/executable

@@ -1,41 +1,56 @@
+const AssemblyFunction = require('./function');
+
 class X86_64AssemblyImage {
 	constructor() {
 		this.mainFunction = '';
+		// this is the entry point of our application
+		this.main = new AssemblyFunction('start');
+
+		this.main.addLine('; setup stack frame');
+		this.main.addLine('push rbp');
+		this.main.addLine('mov rbp, rsp');
+		
+		this.externs = [
+			'printf',
+			'exit'
+		];
 	}
 
+	/**
+	 * Adds an `extern` statement to the top of the file
+	 * @param {String} name 
+	 */
+	linkWithC(name) {
+		this.externs.push(name);
+	}
+
+	/**
+	 * Adds a line to the main function
+	 * @param {String} line 
+	 * @param {String} comment 
+	 */
 	addMainLine(line, comment) {
-		this.mainFunction += '\t' + line + (comment ? ' ; ' + comment : '') + '\n';
+		this.main.addLine(line, comment);
 	}
 
-	getMainFunction() {
-		let func = '\nstart:\n';
-
-		func += '\t; setup the stack frame\n';
-		func += '\tpush rbp\n';
-		func += '\tmov rbp, rsp\n\n';
-
-		func += this.mainFunction;
-
-		// exit script
-		func += '\t;exit with code 0\n';
-		func += '\tadd rsp, 16\n';		
-		func += '\tmov rdi, 0\n';
-		func += '\tcall _exit\n';
-
-		return func;
-	}
-
-	get() {
+	serialize() {
 		let script = '';
 
 		script += 'section .text\n';
 		script += 'global start\n';
-		script += 'extern _printf\n';
-		script += 'extern _exit\n';
 
-		script += this.getMainFunction();
+		for (const extern of this.externs) {
+			script += `extern _${extern}\n`;
+		}
 
-		script += '\n';
+		// don't be confused, this is AFTER the main function instructions!
+		this.main.addLine('; exit with zero code');
+		this.main.addLine('sub rsp, 16');
+		this.main.addLine('mov rdi, 0');
+		this.main.addLine('call _exit');
+
+		script += this.main.serialize();
+
 		script += 'section .data\n';
 		script += '\tprint_digit_instr: db "%d", 0x0a, 0x00\n';
 

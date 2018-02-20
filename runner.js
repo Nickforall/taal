@@ -15,7 +15,7 @@ class Runner {
 
 		this.createOutIfNonExistent();
 
-		fs.writeFileSync(path + '.s', this.image.get());
+		fs.writeFileSync(path + '.s', this.image.serialize());
 		this.compile_assembly(path);
 	}
 
