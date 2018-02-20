@@ -1,0 +1,18 @@
+{
+  "name": "taal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "Nick Vernij <hello@nickforall.nl>",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^4.17.0"
+  },
+  "dependencies": {
+    "chalk": "^2.3.1",
+    "commander": "^2.14.1"
+  },
+  "bin": {
+    "taalc": "./index.js"
+  }
+}
