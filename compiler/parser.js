@@ -17,7 +17,7 @@ class Parser {
 		this.cursor = -1;
 		this.isInBlock = false;
 
-		// console.log(tokens);
+		if (global.TAAL_CONFIG.debug) console.log(tokens);
 	}
 
 	/** 
@@ -296,7 +296,7 @@ class Parser {
 
 		return {
 			type: 'printInstruction',
-			expression: this.parseAtom()
+			expression: this.parseExpression()
 		};
 	}
 
@@ -306,10 +306,10 @@ class Parser {
 	parseAtom() {
 		// parse binary within parenthesis first, because math
 		if (this.is('punctuation', '(')) return this.parseParenthesisBinary();
+		if (this.is('instruction', 'print')) return this.parsePrintInstruction();
+					
 		if (this.is('keyword', 'fn')) return this.parseFunction();
 		if (this.is('keyword', 'ret')) return this.parseReturn();
-
-		if (this.is('instruction', 'print')) return this.parsePrintInstruction();
 
 		let peek = this.peek();
 		if (peek.type === 'numberLiteral') return this.nextClean();

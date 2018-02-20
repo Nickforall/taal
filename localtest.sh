@@ -1,0 +1,1 @@
+node index.js examples/print.tl -d && ./out/executable

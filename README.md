@@ -15,11 +15,9 @@ Most examples in the `/examples` folder are sketches and don't actually compile 
 One thing you can do right now is print simple maths!
 
 ```
-print (2 + 2 - 1)
-print (1234 * 129)
+print 2 + 2 - 1
+print 1234 * 129
 ```
-
-_Heads up! `print` is not a function call but an 'instruction' that prints the expression after it, even though it may look like a function due to the parenthesis required by the parser._
 
 ## Help my program segfaults!
 
