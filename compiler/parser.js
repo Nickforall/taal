@@ -300,6 +300,34 @@ class Parser {
 		};
 	}
 
+	parseSyscallInstruction() {
+		// skip the keyword
+		this.next();
+
+		let name = this.nextIf('stringLiteral');
+		let args = this.delimited('(', ')', ',', this.parseExpression.bind(this));
+
+		if (args.length > 8) {
+			throw new ParserError(
+				'E0006',
+				'SyscallExceedingArguments',
+				`Syscall ${name.value} has more than the maximum amount of arguments for a syscall (8)\n\tExpected a maximum of ${8}, received ${args.length}`, 
+				name.position.line, 
+				name.position.column, 
+				name,
+				this.module
+			);
+		}
+
+		delete name.position;
+
+		return {
+			type: 'syscallInstruction',
+			name: name,
+			arguments: args
+		};
+	}
+
 	/** 
 	 * Parses some part of code
 	 */
@@ -307,6 +335,7 @@ class Parser {
 		// parse binary within parenthesis first, because math
 		if (this.is('punctuation', '(')) return this.parseParenthesisBinary();
 		if (this.is('instruction', 'print')) return this.parsePrintInstruction();
+		if (this.is('instruction', 'syscall')) return this.parseSyscallInstruction();
 					
 		if (this.is('keyword', 'fn')) return this.parseFunction();
 		if (this.is('keyword', 'ret')) return this.parseReturn();

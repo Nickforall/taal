@@ -34,6 +34,29 @@ class Tokenizer {
 		return out;
 	}
 
+	readEscaped(end) {
+		let escaped = false;
+		let str = '';
+
+		this.input.next();
+
+		while (!this.input.eof()) {
+			var ch = this.input.next();
+			if (escaped) {
+				str += ch;
+				escaped = false;
+			} else if (ch == '\\') {
+				escaped = true;
+			} else if (ch == end) {
+				break;
+			} else {
+				str += ch;
+			}
+		}
+
+		return str;
+	}
+
 	isWhitespace() {
 		return /\s/.test(this.input.peek());
 	}
@@ -77,17 +100,23 @@ class Tokenizer {
 
 	isInstruction(id) {
 		return ([
-			'print'
+			'print',
+			'syscall'
 		].indexOf(id) > -1);
+	}
+
+	isString() {
+		return this.input.peek() === '"';
 	}
 
 	next() {
 		if (this.isWhitespace()) return this.skip();
+		if (this.isString()) return this.token('stringLiteral', this.readEscaped('"'));		
 		if (this.isPunctuation()) return this.token('punctuation', this.input.next());
 		if (this.isDigit()) return this.token('numberLiteral', this.readDigit());
 		if (this.isOperator()) return this.token('operator', this.input.next());
 		if (this.isIdentifier()) {
-			let ident =  this.readIdentifier();
+			let ident = this.readIdentifier();
 
 			if (this.isKeyword(ident)) {
 				return this.token('keyword', ident);
@@ -101,10 +130,10 @@ class Tokenizer {
 		let p = this.input.getPosition();
 		throw new ParserError(
 			'E0001',
-			'SyntaxError', 
-			`Unknown character '${this.input.peek()}'`, 
-			p.line, 
-			p.column, 
+			'SyntaxError',
+			`Unknown character '${this.input.peek()}'`,
+			p.line,
+			p.column,
 			null,
 			this.module
 		);
@@ -113,7 +142,7 @@ class Tokenizer {
 	parse() {
 		let tokens = [];
 
-		while (!this.input.eof()) {		
+		while (!this.input.eof()) {
 			let next = this.next();
 
 			if (next) tokens.push(next);

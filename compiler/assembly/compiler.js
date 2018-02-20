@@ -1,5 +1,7 @@
 const ParserError = require('../errors/parsererror');
 const X86AssemblyImage = require('./x86image');
+const X86Syscall = require('./syscall');
+
 
 class Compiler {
 	constructor(ast, module) {
@@ -44,6 +46,8 @@ class Compiler {
 	compileExpression(expression) {
 		if (expression.type == 'binary') return this.compileBinary(expression);
 		if (expression.type == 'printInstruction') return this.compilePrintInstruction(expression);
+		if (expression.type == 'syscallInstruction') return this.compileSyscallInstruction(expression);
+		
 		if (expression.type == 'numberLiteral') return this.compileLiteral(expression);
 
 		throw new ParserError(
@@ -66,6 +70,18 @@ class Compiler {
 		this.image.addMainLine('mov rdi, print_digit_instr', 'preset constant string to print numbers');	
 		this.image.addMainLine('call _printf');
 	}
+
+	compileSyscallInstruction(expression) {
+		var reversed_args = expression.arguments.reverse();
+		var call = new X86Syscall(expression.name.value, reversed_args, this.image.main);
+
+		for (const arg_expression of reversed_args) {
+			this.compileExpression(arg_expression);
+		}
+		
+		call.create();
+	}
+	
 
 	compile() {
 		var expressionList = this.script;

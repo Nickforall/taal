@@ -9,6 +9,7 @@ class X86_64AssemblyImage {
 		this.main.addLine('; setup stack frame');
 		this.main.addLine('push rbp');
 		this.main.addLine('mov rbp, rsp');
+		this.main.addLine('add rsp, 16', 'align stack with 16bits');
 		
 		this.externs = [
 			'printf',

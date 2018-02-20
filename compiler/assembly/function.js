@@ -6,10 +6,19 @@ class X86Function {
 		this.lines = [];
 	}
 
+	/**
+	 * Adds a line of assembly code to the function
+	 * @param {String} line 
+	 * @param {String} comment 
+	 */
 	addLine(line, comment) {
 		this.lines.push(line + (comment ? ' ; ' + comment : ''));
 	}
 
+	/**
+	 * Strips comments from a line
+	 * @param {String} line 
+	 */
 	stripComment(line) {
 		var splitted = line.split(';');
 		
@@ -100,8 +109,11 @@ class X86Function {
 		this.lines = optimized;
 	}
 
+	/**
+	 * Returns a string which is the nasm source code for this function
+	 */
 	serialize() {
-		let section = this.name + ':\n';
+		let section = this.name + ':\n\t';
 
 		if (!global.TAAL_CONFIG.skipOptimization) this.optimize();
 
