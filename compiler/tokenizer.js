@@ -109,8 +109,20 @@ class Tokenizer {
 		return this.input.peek() === '"';
 	}
 
+	isComment() {
+		return this.input.peek() === '#';
+	}
+
 	next() {
 		if (this.isWhitespace()) return this.skip();
+		// skip comments
+		if (this.isComment()) {
+			this.readWhile(() => {
+				return this.input.peek() !== '\n';
+			});
+			return;
+		}
+
 		if (this.isString()) return this.token('stringLiteral', this.readEscaped('"'));		
 		if (this.isPunctuation()) return this.token('punctuation', this.input.next());
 		if (this.isDigit()) return this.token('numberLiteral', this.readDigit());
