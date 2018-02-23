@@ -15,7 +15,9 @@ class Parser {
 		this.module = module;
 
 		this.cursor = -1;
-		this.isInBlock = false;
+		this.currentFunction = null;
+		this.mainFunctionVariables = [];
+		this.localVariableSize = 0;
 
 		if (global.TAAL_CONFIG.debug) console.log(tokens);
 	}
@@ -50,7 +52,7 @@ class Parser {
 	 * Returns the next token without the position object and moves the cursor 
 	 */
 	nextClean() {
-		let next = this.next();
+		let next = Object.assign({}, this.next());
 		delete next.position;
 
 		return next;
@@ -192,9 +194,7 @@ class Parser {
 	 * Parses a code block
 	 */
 	parseBlock() {
-		this.isInBlock = true;
 		var program = this.delimited('{', '}', null, this.parseExpression.bind(this));
-		this.isInBlock = false;
 		return {
 			type: 'block',
 			expressions: program
@@ -212,12 +212,49 @@ class Parser {
 		if (token) {
 			var rightPrecedence = PRECEDENCE[token.value];
 
+			var type = (token.value === '=' ? 'assign' : 'binary');
+
+			if (type == 'assign' && left.type == 'identifier') {
+				var varName = left.value;
+				var offset = 0;
+
+				if (this.currentFunction !== null) {
+					if (this.currentFunction.variables.indexOf(varName) < 0) {
+						for (const v of this.currentFunction.variables) {
+							offset += v.bytesize;
+						}
+
+						this.currentFunction.localVariableSize = offset + 4;
+
+						this.currentFunction.variables.push({
+							variable: varName,
+							bytesize: 4, // integer
+							offset
+						});
+					}
+				} else {
+					if (this.mainFunctionVariables.variables.indexOf(varName) < 0) {				
+						for (const v of this.mainFunctionVariables.variables) {
+							offset += v.bytesize;
+						}
+
+						this.localVariableSize = offset + 4;						
+
+						this.mainFunctionVariables.variables.push({
+							variable: varName,
+							bytesize: 4, // integer
+							offset
+						});
+					}
+				}
+			}
+
 			if (rightPrecedence > precedence) {
 				this.next();
 				return this.maybeBinary({
-					type: token.value === '=' ? 'assign' : 'binary',
+					type,
 					operator: token.value,
-					left: left,
+					left,
 					right: this.maybeBinary(this.parseAtom(), rightPrecedence),
 				}, precedence);
 			}
@@ -243,11 +280,36 @@ class Parser {
 		// skip 'fn' keyword
 		this.next();
 
-		return {
+		if (this.currentFunction !== null) {
+			throw new ParserError(
+				'E0007',
+				'NestedFunctionError',
+				'You are not allowed to nest named functions...', 
+				this.peek().position.line, 
+				this.peek().position.column, 
+				this.peek(),
+				this.module
+			);
+		}
+
+		// the function expression
+		this.currentFunction = {
 			type: 'functionDefinition',
+			variables: [],
 			name: this.nextCleanIf('identifier'),
-			block: this.parseBlock()
 		};
+
+		// parse the block
+		this.currentFunction.block = this.parseBlock();
+
+		// copy local
+		var fun = this.currentFunction;
+
+		// set back to null
+		this.currentFunction = null;
+
+		// return the currentFunction
+		return fun;
 	}
 
 	/** 
@@ -257,7 +319,7 @@ class Parser {
 		// skip the keyword
 		this.skip('keyword', 'ret');
 
-		if (!this.isInBlock) {
+		if (this.currentFunction === null) {
 			throw new ParserError(
 				'E0003',
 				'ReturnScopeError',
@@ -288,7 +350,7 @@ class Parser {
 	}
 
 	/**
-	 * 
+	 * Parses the print instruction
 	 */
 	parsePrintInstruction() {
 		// skip the keyword
@@ -300,6 +362,9 @@ class Parser {
 		};
 	}
 
+	/**
+	 * Parses a syscall instruction
+	 */
 	parseSyscallInstruction() {
 		// skip the keyword
 		this.next();

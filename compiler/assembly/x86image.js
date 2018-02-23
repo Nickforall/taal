@@ -15,6 +15,8 @@ class X86_64AssemblyImage {
 			'printf',
 			'exit'
 		];
+
+		this.functions = [];
 	}
 
 	/**
@@ -34,6 +36,10 @@ class X86_64AssemblyImage {
 		this.main.addLine(line, comment);
 	}
 
+	addFunction(fun) {
+		this.functions.push(fun);
+	}
+
 	serialize() {
 		let script = '';
 
@@ -51,6 +57,11 @@ class X86_64AssemblyImage {
 		this.main.addLine('call _exit');
 
 		script += this.main.serialize();
+
+		for (const f of this.functions) {
+			script += '\n\n';
+			script += f.serialize();
+		}
 
 		script += 'section .data\n';
 		script += '\tprint_digit_instr: db "%d", 0x0a, 0x00\n';

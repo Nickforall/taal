@@ -12,6 +12,7 @@ class X86Function {
 	 * @param {String} comment 
 	 */
 	addLine(line, comment) {
+		if (line == '1') throw Error();
 		this.lines.push(line + (comment ? ' ; ' + comment : ''));
 	}
 
