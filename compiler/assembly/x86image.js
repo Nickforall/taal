@@ -50,16 +50,8 @@ class X86_64AssemblyImage {
 			script += `extern _${extern}\n`;
 		}
 
-		// don't be confused, this is AFTER the main function instructions!
-		this.main.addLine('; exit with zero code');
-		this.main.addLine('and rsp, -16');
-		this.main.addLine('mov rdi, 0');
-		this.main.addLine('call _exit');
-
-		script += this.main.serialize();
-
 		for (const f of this.functions) {
-			script += '\n\n';
+			script += '\n';
 			script += f.serialize();
 		}
 

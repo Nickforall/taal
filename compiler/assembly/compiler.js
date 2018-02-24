@@ -51,7 +51,7 @@ class Compiler {
 	}
 
 	compileFunctionDefinition(expression) {
-		var f = new X86Function(expression.name.value);
+		var f = new X86Function(expression.name);
 
 		this.currentFunction = f;
 		this.currentFunctionExpression = expression;
@@ -59,38 +59,45 @@ class Compiler {
 		// setup stack
 		f.addLine('push rbp');
 		f.addLine('mov rbp, rsp');
-		f.addLine(`sub rsp, ${expression.localVariableSize}`);
 
+		if (f.name == 'start') {
+			f.addLine('add rsp, 16');
+		}
+
+		f.addLine(`sub rsp, ${expression.varsize}`);
+		
 		// do stuff
-		for (const ex of expression.block.expressions) {
+		for (const ex of expression.expressions) {
 			this.compileExpression(ex);			
 		}
 
-		// restore stack jizz
-		f.addLine('mov rsp, rbp');
-		f.addLine('pop rbp');
-		// return
-		f.addLine('ret');
+		if (f.name !== 'start') {
+			// restore stack jizz
+			f.addLine('mov rsp, rbp');
+			f.addLine('pop rbp');
+			// return
+			f.addLine('ret');
+		}
 
 		this.currentFunction = null;
 		this.currentFunctionExpression = null;
 
-		this.image.addFunction(f);
+		return f;
 	}
 	
 	compileAssign(assign) {
 		this.compileExpression(assign.right);
 
-		var offset = this.currentFunctionExpression.variables.find(x => x.variable === assign.left.value).offset;
+		var offset = this.currentFunctionExpression.variables.find(x => x.name === assign.left.value).offset;
 
 		this.addLine('pop rdx');
-		this.addLine(`mov [rbp-${this.currentFunctionExpression.localVariableSize - offset}], rdx`);
+		this.addLine(`mov [rbp-${this.currentFunctionExpression.varsize - offset}], rdx`);
 	}
 
 	compileIdentifier(expression) {
-		var offset = this.currentFunctionExpression.variables.find(x => x.variable === expression.value).offset;		
+		var offset = this.currentFunctionExpression.variables.find(x => x.name === expression.value).offset;		
 		// so i couldn't do `push dword [rbp-offset]`, this is the best i could do...
-		this.addLine(`mov rdx, [rbp-${this.currentFunctionExpression.localVariableSize - offset}]`);
+		this.addLine(`mov rdx, [rbp-${this.currentFunctionExpression.varsize - offset}]`);
 		this.addLine('push rdx');	
 	}
 
@@ -98,8 +105,7 @@ class Compiler {
 		this.addLine(`call ${expression.name.value}`);
 	}
 
-	compileExpression(expression) {
-		if (expression.type === 'functionDefinition') return this.compileFunctionDefinition(expression);		
+	compileExpression(expression) {	
 		if (expression.type === 'binary') return this.compileBinary(expression);
 		if (expression.type === 'assign') return this.compileAssign(expression);
 		if (expression.type === 'call') return this.compileCall(expression);		
@@ -143,10 +149,17 @@ class Compiler {
 	
 
 	compile() {
-		var expressionList = this.script;
+		for (const f of this.script.functions) {
+			let asmf = this.compileFunctionDefinition(f);
 
-		for (const expression of expressionList) {
-			this.compileExpression(expression);
+			if(f.isEntry) {
+				asmf.addLine('; exit with zero code');
+				asmf.addLine('and rsp, -16');
+				asmf.addLine('mov rdi, 0');
+				asmf.addLine('call _exit');
+			}
+			
+			this.image.addFunction(asmf);
 		}
 
 		return this.image;
@@ -156,7 +169,7 @@ class Compiler {
 		if (this.currentFunction !== null) {
 			this.currentFunction.addLine(code, comment);
 		} else {
-			this.image.addMainLine(code, comment);
+			throw Error('why are we not in a function');
 		}
 	}
 }

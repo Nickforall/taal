@@ -1,4 +1,5 @@
 const ParserError = require('./errors/parsererror');
+const FunctionDefinition = require('./ast/functiondefinition');
 
 const PRECEDENCE = {
 	'=': 1,
@@ -13,11 +14,11 @@ class Parser {
 	constructor(tokens, module) {
 		this.tokens = tokens;
 		this.module = module;
+		this.cursor = -1;		
 
-		this.cursor = -1;
+		this.main = new FunctionDefinition('start');
 		this.currentFunction = null;
-		this.mainFunctionVariables = [];
-		this.localVariableSize = 0;
+		this.functions = [];
 
 		if (global.TAAL_CONFIG.debug) console.log(tokens);
 	}
@@ -216,36 +217,11 @@ class Parser {
 
 			if (type == 'assign' && left.type == 'identifier') {
 				var varName = left.value;
-				var offset = 0;
 
 				if (this.currentFunction !== null) {
-					if (this.currentFunction.variables.indexOf(varName) < 0) {
-						for (const v of this.currentFunction.variables) {
-							offset += v.bytesize;
-						}
-
-						this.currentFunction.localVariableSize = offset + 4;
-
-						this.currentFunction.variables.push({
-							variable: varName,
-							bytesize: 4, // integer
-							offset
-						});
-					}
-				} else {
-					if (this.mainFunctionVariables.variables.indexOf(varName) < 0) {				
-						for (const v of this.mainFunctionVariables.variables) {
-							offset += v.bytesize;
-						}
-
-						this.localVariableSize = offset + 4;						
-
-						this.mainFunctionVariables.variables.push({
-							variable: varName,
-							bytesize: 4, // integer
-							offset
-						});
-					}
+					this.currentFunction.addVariable(varName, 4);
+				} else {			
+					this.main.addVariable(varName, 4);
 				}
 			}
 
@@ -293,23 +269,19 @@ class Parser {
 		}
 
 		// the function expression
-		this.currentFunction = {
-			type: 'functionDefinition',
-			variables: [],
-			name: this.nextCleanIf('identifier'),
-		};
+		this.currentFunction = new FunctionDefinition(this.nextCleanIf('identifier').value);
 
 		// parse the block
-		this.currentFunction.block = this.parseBlock();
+		this.currentFunction.setBlock(this.parseBlock());
 
 		// copy local
-		var fun = this.currentFunction;
+		var functionObject = this.currentFunction.serialize();
 
 		// set back to null
 		this.currentFunction = null;
 
 		// return the currentFunction
-		return fun;
+		return functionObject;
 	}
 
 	/** 
@@ -397,12 +369,16 @@ class Parser {
 	 * Parses some part of code
 	 */
 	parseAtom() {
+		if (this.is('keyword', 'fn')) {
+			this.functions.push(this.parseFunction());
+			return;
+		}
+
 		// parse binary within parenthesis first, because math
 		if (this.is('punctuation', '(')) return this.parseParenthesisBinary();
 		if (this.is('instruction', 'print')) return this.parsePrintInstruction();
 		if (this.is('instruction', 'syscall')) return this.parseSyscallInstruction();
 					
-		if (this.is('keyword', 'fn')) return this.parseFunction();
 		if (this.is('keyword', 'ret')) return this.parseReturn();
 
 		let peek = this.peek();
@@ -425,7 +401,10 @@ class Parser {
 	 */
 	parseExpression() {
 		return this.maybeCall(() => {
-			return this.maybeBinary(this.parseAtom(), 0);
+			let atom = this.parseAtom();
+			if (atom) {
+				return this.maybeBinary(atom, 0);
+			}
 		});
 	}
 
@@ -442,17 +421,30 @@ class Parser {
 	 * A function that keeps on parsing until we run out of token 
 	 */
 	parse() {
-		let script = [];
+		let mainFunctionBlock = [];
 
 		while (this.peek() !== undefined) {
-			script.push(this.parseExpression());
+			let expr = this.parseExpression();
+			if(expr) mainFunctionBlock.push(expr);
 
 			if (this.peek() !== undefined) {
 				this.optionalSkip('punctuation', ';');
 			}
 		}
 
-		return script;
+		this.main.setBlock({
+			expressions: mainFunctionBlock
+		});
+
+		let fObj = this.main.serialize();
+		fObj.isEntry = true;
+
+		this.functions.unshift(fObj);
+
+		return {
+			type: 'script',
+			functions: this.functions
+		};
 	}
 }
 

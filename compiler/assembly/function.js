@@ -118,9 +118,8 @@ class X86Function {
 
 		if (!global.TAAL_CONFIG.skipOptimization) this.optimize();
 
-		this.addLine('\n');
-
-		section += this.lines.join('\n\t'); 
+		section += this.lines.join('\n\t');
+		section += '\n';
 
 		return section;
 	}
