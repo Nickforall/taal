@@ -96,7 +96,7 @@ class X86Function {
 
 			// add comments
 			if (lineObject.comment) {
-				l += lineObject.comment;
+				// l += lineObject.comment;
 			}
 			
 			// if the line is empty, we move on.

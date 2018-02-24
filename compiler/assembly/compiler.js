@@ -21,25 +21,27 @@ class Compiler {
 			+ binary.right.value
 		);
 
-		this.compileExpression(binary.right);
+		var source = '[rsp]';
+
+		if (binary.right.type === 'numberLiteral' && !global.TAAL_CONFIG.skipOptimization) {
+			source = `${binary.right.value}`;
+		} else {
+			this.compileExpression(binary.right);
+		}
+
 		this.compileExpression(binary.left);
 		this.addLine('pop rax');
 
-		// TODO: if right is numeral literal, 
-		// 		 we can drastically optimize this
-
 		switch (binary.operator) {
-			
 		case '*':
-			this.addLine('imul rax, [rsp]');
+			this.addLine(`imul rax, ${source}`);
 			break;
 		case '+':
-			this.addLine('add rax, [rsp]');
+			this.addLine(`add rax, ${source}`);
 			break;
 		case '-':
-			this.addLine('sub rax, [rsp]');
+			this.addLine(`sub rax, ${source}`);
 			break;
-
 		}
 
 		this.addLine('pop rdx');
