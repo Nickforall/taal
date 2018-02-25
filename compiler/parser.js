@@ -219,9 +219,9 @@ class Parser {
 				var varName = left.value;
 
 				if (this.currentFunction !== null) {
-					this.currentFunction.addVariable(varName, 4);
+					this.currentFunction.addVariable(varName, 8);
 				} else {			
-					this.main.addVariable(varName, 4);
+					this.main.addVariable(varName, 8);
 				}
 			}
 
