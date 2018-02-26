@@ -16,7 +16,7 @@ class Parser {
 		this.module = module;
 		this.cursor = -1;		
 
-		this.main = new FunctionDefinition('start');
+		this.main = new FunctionDefinition('main');
 		this.currentFunction = null;
 		this.functions = [];
 
@@ -439,7 +439,7 @@ class Parser {
 		let fObj = this.main.serialize();
 		fObj.isEntry = true;
 
-		this.functions.unshift(fObj);
+		this.functions.push(fObj);
 
 		return {
 			type: 'script',

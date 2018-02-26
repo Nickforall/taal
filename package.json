@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "chalk": "^2.3.1",
-    "commander": "^2.14.1"
+    "commander": "^2.14.1",
+    "llvm-node": "^2.0.4"
   },
   "bin": {
     "taalc": "./index.js"
