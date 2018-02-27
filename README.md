@@ -29,9 +29,3 @@ fn quick_maths {
 
 quick_maths()
 ```
-
-## Help my program segfaults!
-
-Yeah, I don't understand it either. Try switching folders or terminal windows when attempting to run it and it'll run fine (probably).
-
-If it doesn't please run the compiler with the `-t` flag and make an issue that includes the most recent assembly file from `./out/tmp/`;
