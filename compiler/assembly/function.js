@@ -88,6 +88,8 @@ class X86Function {
 					// we're doing an optimization and removing the next expression to merge it into the current.
 					ourLines[index + 1] = null; 
 
+					if (to === from) continue;
+
 					// push the optimized expression
 					optimized.push(`mov ${to}, ${from}`);
 					continue;
