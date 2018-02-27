@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
+const ParserError = require('./compiler/errors/parsererror');
+const AssemblerProcessException = require('./compiler/processes/exceptions/assembler');
+const LinkerException = require('./compiler/processes/exceptions/linker');
+
 global.TAAL_START_COMPILE_DATE = Date.now();
 global.TAAL_CONFIG = {
 	debug: false,
@@ -33,4 +37,28 @@ global.TAAL_CONFIG.preserveTemp = program.temporary;
 Taal.compileFile(
 	path.join(process.cwd(), program.args[0]), 
 	program.output ? program.output : 'executable'
-);	
+).then((name, path) => {
+	console.log(chalk.green(`Succesful compilation of binary '${name}', finished in ${Date.now() - global.TAAL_START_COMPILE_DATE}ms!`));					
+	process.exit(0);
+}).catch((ex) => {
+	console.log(chalk.red(`compilation failed ${process.platform === 'darwin' ? '\uD83D\uDE2D' : ':('}`));
+				
+	if (ex instanceof LinkerException) {
+		process.stderr.write(ex.stderr);
+		console.log(chalk.red(`linker process exited with code ${ex.code}`));
+		process.exit(3);		
+	} else if (ex instanceof AssemblerProcessException) {
+		process.stderr.write(ex.stderr);
+		console.log(chalk.red(`assembler process exited with code ${ex.code}`));
+		process.exit(3);			
+	} else if (ex instanceof ParserError) {
+		console.log(chalk.red(ex.getTitle() + ':') + '\n' + ex.getMessage());
+		console.log('\n' + ex.getSourceContext() + '\n');
+
+		console.log(chalk.red('exiting compilation, compilation failed.'));
+		process.exit(2);
+	}
+
+	console.log(ex.stack);
+	process.exit(2);
+});
