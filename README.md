@@ -12,11 +12,22 @@ Use `taalc -h` for usage instruction
 
 Most examples in the `/examples` folder are sketches and don't actually compile to assembly (yet).
 
-One thing you can do right now is print simple maths!
+One thing you can do right now is print simple maths, create simple functions, and create local variables!
 
-```
+```taal
 print 2 + 2 - 1
 print 1234 * 129
+```
+
+```taal
+fn quick_maths {
+	four = 2 + 2
+	three = four - 1
+
+	print three
+}
+
+quick_maths()
 ```
 
 ## Help my program segfaults!
