@@ -140,7 +140,7 @@ class Compiler {
 
 	compileSyscallInstruction(expression) {
 		var reversed_args = expression.arguments.reverse();
-		var call = new X86Syscall(expression.name.value, reversed_args, this.image.main);
+		var call = new X86Syscall(expression.name.value, reversed_args, this.currentFunction);
 
 		for (const arg_expression of reversed_args) {
 			this.compileExpression(arg_expression);

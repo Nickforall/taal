@@ -37,8 +37,8 @@ global.TAAL_CONFIG.preserveTemp = program.temporary;
 Taal.compileFile(
 	path.join(process.cwd(), program.args[0]), 
 	program.output ? program.output : 'executable'
-).then((name, path) => {
-	console.log(chalk.green(`Succesful compilation of binary '${name}', finished in ${Date.now() - global.TAAL_START_COMPILE_DATE}ms!`));					
+).then((obj) => {
+	console.log(chalk.green(`Succesful compilation of binary '${obj.name}', finished in ${Date.now() - global.TAAL_START_COMPILE_DATE}ms!`));					
 	process.exit(0);
 }).catch((ex) => {
 	console.log(chalk.red(`compilation failed ${process.platform === 'darwin' ? '\uD83D\uDE2D' : ':('}`));

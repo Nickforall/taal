@@ -1,0 +1,1 @@
+syscall "exit" (100)

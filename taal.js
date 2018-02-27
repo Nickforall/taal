@@ -22,17 +22,15 @@ class Taal {
 						p
 					).parse(),
 					p
-				).parse();
-	
+				).parse();	
 				if (global.TAAL_CONFIG.debug) console.log(JSON.stringify(script, null, 4));		
 	
 				let c = new Compiler(script, p);
 				let binary = c.compile();
 	
 				let runner = new Runner(outputname, binary);
-	
-				runner.run().then((name, fullpath) => {
-					resolve(name, fullpath);
+				runner.run().then((obj) => {
+					resolve(obj);
 				}).catch((ex) => {
 					reject(ex);
 				});

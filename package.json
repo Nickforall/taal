@@ -14,5 +14,8 @@
   },
   "bin": {
     "taalc": "./index.js"
+  },
+  "scripts": {
+    "test": "node tests/tester.js"
   }
 }

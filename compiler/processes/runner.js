@@ -43,7 +43,7 @@ class Runner {
 	compile_assembly(asmpath) {
 		// nasm -f macho64 $1.s && ld -macosx_version_min 10.7.0 -lSystem -o $1 $1.o
 		return new Promise((resolve, reject) => {
-			let result = Path.join(process.cwd(), '/out/', this.name);
+			let executablepath = Path.join(process.cwd(), '/out/', this.name);
 			
 			let nasm = spawn(
 				'nasm',
@@ -75,7 +75,7 @@ class Runner {
 				}
 	
 				try {
-					fs.unlinkSync(result);
+					fs.unlinkSync(executablepath);
 				} catch (_) { 
 					// do nothing
 				}
@@ -87,7 +87,7 @@ class Runner {
 						'10.7.0',
 						'-lSystem',
 						'-o',
-						result,
+						executablepath,
 						asmpath + '.o'
 					]
 				);
@@ -118,7 +118,7 @@ class Runner {
 						fs.unlinkSync(asmpath + '.s');	
 					}
 
-					resolve(this.name);
+					resolve({name: this.name, executablepath});
 				});
 			});
 		});

@@ -1,0 +1,6 @@
+language: node_js
+os: osx
+before_install:
+  - brew install nasm
+notifications:
+  email: false

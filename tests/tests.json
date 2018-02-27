@@ -1,0 +1,30 @@
+{
+	"tests": [
+		{
+			"description": "Tests print instructions",
+			"source": "./source/print.tl",
+			"stdout": "100\n"
+		},
+		{
+			"description": "Tests syscall exit",
+			"source": "./source/syscall_exit.tl",
+			"stdout": "",
+			"exitCode": 100
+		},
+		{
+			"description": "Tests arithmetic operations and precedence",
+			"source": "./source/arithmetic.tl",
+			"stdout": "1100\n31\n3100\n"
+		},
+		{
+			"description": "Tests argumentless functions",
+			"source": "./source/functions.tl",
+			"stdout": "123\n"
+		},
+		{
+			"description": "Tests variable assignment and reassignment",
+			"source": "./source/local_variables.tl",
+			"stdout": "2050\n"
+		}
+	]
+}
