@@ -4,3 +4,5 @@ before_install:
   - brew install nasm
 notifications:
   email: false
+node_js:
+  - "7"

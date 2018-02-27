@@ -1,6 +1,6 @@
 # Taal
 
-![travis](https://travis-ci.org/Nickforall/taal.svg?branch=master)
+[![Build Status](https://travis-ci.org/Nickforall/taal.svg?branch=master)](https://travis-ci.org/Nickforall/taal)
 
 Taal is a little weird experimental programming langauge that compiles to machine code (currently only on MacOS, only 64 bit, and requires `ld` and `nasm`)
 

@@ -28,6 +28,7 @@ function nextTest(num) {
 		.catch((ex) => {
 			console.log(`[${Chalk.red(' X ')}] Error during compiletime for ${test.source}`);
 			console.error(ex);
+			if(ex.stderr) console.error(ex.stderr);
 			returningExit = 1;
 		});
 }
