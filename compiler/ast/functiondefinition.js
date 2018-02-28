@@ -7,6 +7,8 @@ class FunctionDefinition extends SyntaxTreeNode {
 		this.name = name;
 		this.variables = [];
 		this.expressions = [];
+		this.arguments = [];
+		this.argsize = -1;
 		this.size = 0;
 	}
 
@@ -19,12 +21,29 @@ class FunctionDefinition extends SyntaxTreeNode {
 		if (this.variables.find((x) => x.name === name)) return;
 
 		this.variables.push({
-			name: name,
+			name,
 			offset: this.size,
 			bytesize: sizeof
 		});
 
 		this.size += sizeof;		
+	}
+
+	/**
+	 * Adds argument information to function
+	 * @param {String} name 
+	 * @param {Number} sizeof 
+	 */
+	addArgument(name, sizeof) {
+		if (this.arguments.find((x) => x.name === name)) return;
+		
+		this.arguments.push({
+			name,
+			index: ++this.argsize,
+			bytesize: sizeof
+		});
+
+		this.addVariable(name, sizeof);
 	}
 
 	/**
@@ -44,6 +63,7 @@ class FunctionDefinition extends SyntaxTreeNode {
 			type: 'functionDefinition',
 			variables: this.variables,
 			varsize: this.size,
+			args: this.arguments,
 			name: this.name,
 			namespace: [],
 			expressions: this.expressions,

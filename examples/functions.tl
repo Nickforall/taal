@@ -1,5 +1,6 @@
-fn hey  {
-	test = 1 * 200
+fn count (i) {
+	print i
+	count (i+1)
 }
 
-hey()
+count (0)

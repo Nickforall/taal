@@ -25,6 +25,11 @@
 			"description": "Tests variable assignment and reassignment",
 			"source": "./source/local_variables.tl",
 			"stdout": "2050\n"
+		},
+		{
+			"description": "Tests functions with arguments",
+			"source": "./source/advanced_functions.tl",
+			"stdout": "150\n"
 		}
 	]
 }

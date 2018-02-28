@@ -67,6 +67,26 @@ class Compiler {
 		}
 
 		f.addLine(`sub rsp, ${expression.varsize}`);
+
+		const abiRegs = [
+			'rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9'
+		];
+
+		if (this.currentFunctionExpression.args.length > 0) {
+			for (const arg of this.currentFunctionExpression.args) {
+				var offset = this.currentFunctionExpression.variables.find(
+					x => x.name === arg.name
+				).offset;
+
+				var src = abiRegs[arg.index];
+				if (arg.index >= abiRegs.length) {
+					f.addLine('pop rax');
+					src = 'rax';
+				}
+
+				f.addLine(`mov [rbp-${this.currentFunctionExpression.varsize - offset}], ${src}`);
+			}
+		}
 		
 		// do stuff
 		for (const ex of expression.expressions) {
@@ -104,6 +124,22 @@ class Compiler {
 	}
 
 	compileCall(expression) {
+		const abiRegs = [
+			'rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9'
+		];
+
+		if (expression.args.length > 0) {
+			for (let i = 0; i < expression.args.length; i++) {
+				const arg = expression.args[i];
+				
+				this.compileExpression(arg);
+				
+				if (abiRegs.length > i) {
+					this.addLine(`pop ${abiRegs[i]}`);
+				}
+			}
+		}
+
 		this.addLine(`call ${expression.name.value}`);
 	}
 

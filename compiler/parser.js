@@ -271,6 +271,23 @@ class Parser {
 		// the function expression
 		this.currentFunction = new FunctionDefinition(this.nextCleanIf('identifier').value);
 
+		if (this.is('punctuation', '(')) {
+			var args = this.delimited('(', ')', ',', this.parseExpression.bind(this));
+			for (const a of args) {
+				if (a.type !== 'identifier') throw new ParserError(
+					'E0002',
+					'UnexpectedToken',
+					`Unexpected token ${a.value}, expected an identifier`, 
+					this.peek().position.line, 
+					this.peek().position.column, 
+					this.peek(),
+					this.module
+				);
+
+				this.currentFunction.addArgument(a.value, 8);
+			}
+		}
+
 		// parse the block
 		this.currentFunction.setBlock(this.parseBlock());
 
