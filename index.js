@@ -30,6 +30,11 @@ if(program.args.length < 1) {
 	return;
 }
 
+if(process.platform !== 'darwin') {
+	console.log(chalk.red('We currently only support x86_64 on darwin (MacOS) platforms.'));
+	process.exit(1);
+}
+
 global.TAAL_CONFIG.debug = program.debug;
 global.TAAL_CONFIG.skipOptimization = program.skipOptimization;
 global.TAAL_CONFIG.preserveTemp = program.temporary;
