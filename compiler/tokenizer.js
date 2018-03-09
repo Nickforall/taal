@@ -94,7 +94,8 @@ class Tokenizer {
 			'let',
 			'mut',
 			'fn',
-			'ret'
+			'ret',
+			'if'
 		].indexOf(id) > -1);
 	}
 
@@ -113,6 +114,10 @@ class Tokenizer {
 		return this.input.peek() === '#';
 	}
 
+	isBooleanOperator() {
+		return '><'.indexOf(this.input.peek()) > -1; 
+	}
+
 	next() {
 		if (this.isWhitespace()) return this.skip();
 		// skip comments
@@ -127,6 +132,8 @@ class Tokenizer {
 		if (this.isPunctuation()) return this.token('punctuation', this.input.next());
 		if (this.isDigit()) return this.token('numberLiteral', this.readDigit());
 		if (this.isOperator()) return this.token('operator', this.input.next());
+		if (this.isBooleanOperator()) return this.token('booleanop', this.input.next());
+		
 		if (this.isIdentifier()) {
 			let ident = this.readIdentifier();
 

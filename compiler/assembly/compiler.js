@@ -10,6 +10,9 @@ class Compiler {
 		this.module = module;
 		this.image = new X86AssemblyImage();
 
+		// for the labels of blocks to be unique
+		this.blockIndex = 0; 
+
 		this.currentFunction = null;
 		this.currentFunctionExpression = null;
 	}
@@ -48,6 +51,49 @@ class Compiler {
 		this.addLine('push rax');
 	}
 
+	compileCondition(expression) {
+		this.compileExpression(expression.left);
+		this.compileExpression(expression.right);
+
+		// NOTE: this is incompatible with our standard system, pushing after every
+		//		 expression. It should always be followed by a conditional jump.
+
+		this.addLine('pop rax');
+		this.addLine('pop rdx');
+
+		this.addLine('cmp rdx, rax');
+
+		return expression.operator;
+	}
+
+	compileIfStatement(expression) {
+		const op = this.compileCondition(expression.condition);
+		let jmpInstruction;
+
+		// this is the inverse instruction, because if it's true
+		switch(op) {
+
+		case '>':
+			jmpInstruction = 'jl';
+			break;
+		case '<':
+			jmpInstruction = 'jg';
+		}
+
+		var blockIndex = this.blockIndex++;		
+
+		this.addLine(`${jmpInstruction} .__if_${blockIndex}_end`);
+		this.addLine(`.__if_${blockIndex}:`);
+
+		for (const blockExpression of expression.block.expressions) {
+			this.compileExpression(blockExpression);
+		}
+
+		this.addLine(`.__if_${blockIndex}_end:`);
+		// I really don't know what this does tbh, but control flow is broken if i don't
+		this.addLine('sub rsp, 8');
+	}
+
 	compileLiteral(expression) {
 		this.addLine(`push ${expression.value}`);
 	}
@@ -63,7 +109,7 @@ class Compiler {
 		f.addLine('mov rbp, rsp');
 
 		if (f.name == 'start') {
-			f.addLine('add rsp, 16');
+			f.addLine('sub rsp, 16');
 		}
 
 		f.addLine(`sub rsp, ${expression.varsize}`);
@@ -150,6 +196,7 @@ class Compiler {
 		if (expression.type === 'identifier') return this.compileIdentifier(expression);
 		if (expression.type === 'printInstruction') return this.compilePrintInstruction(expression);
 		if (expression.type === 'syscallInstruction') return this.compileSyscallInstruction(expression);
+		if (expression.type === 'ifStatement') return this.compileIfStatement(expression);
 		
 		if (expression.type === 'numberLiteral') return this.compileLiteral(expression);
 

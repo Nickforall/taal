@@ -208,12 +208,17 @@ class Parser {
 	 * @param {Number} precedence the right's part precedence number
 	 */
 	maybeBinary(left, precedence) {
-		var token = this.is('operator');
+		var token = this.is('operator') || this.is('booleanop');
 
 		if (token) {
 			var rightPrecedence = PRECEDENCE[token.value];
 
-			var type = (token.value === '=' ? 'assign' : 'binary');
+			var operator = 'binary';
+			if (token.type == 'booleanop') {
+				operator = 'compare';
+			}
+
+			var type = (token.value === '=' ? 'assign' : operator);
 
 			if (type == 'assign' && left.type == 'identifier') {
 				var varName = left.value;
@@ -326,6 +331,16 @@ class Parser {
 		};
 	}
 
+	parseIf() {
+		this.skip('keyword', 'if');
+
+		return {
+			condition: this.parseExpression(),
+			block: this.parseBlock(),
+			type: 'ifStatement'
+		};
+	}
+
 	/**
 	 * Parses a call
 	 * @param {Object} expression the expression that makes up the function
@@ -390,6 +405,8 @@ class Parser {
 			this.functions.push(this.parseFunction());
 			return;
 		}
+
+		if (this.is('keyword', 'if')) return this.parseIf();
 
 		// parse binary within parenthesis first, because math
 		if (this.is('punctuation', '(')) return this.parseParenthesisBinary();
