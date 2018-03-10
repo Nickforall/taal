@@ -151,7 +151,7 @@ class Compiler {
 		}
 
 		if (f.name !== 'start') {
-			// restore stack jizz
+			// restore stack
 			f.addLine('mov rsp, rbp');
 			f.addLine('pop rbp');
 			// return
@@ -198,6 +198,15 @@ class Compiler {
 		}
 
 		this.addLine(`call ${expression.name.value}`);
+		this.addLine('push rax'); //pop the return value
+	}
+
+	compileReturn(expression) {
+		this.compileExpression(expression.expression);
+		this.addLine('pop rax');
+		this.addLine('mov rsp, rbp');
+		this.addLine('pop rbp');
+		this.addLine('ret');
 	}
 
 	compileExpression(expression) {	
@@ -208,7 +217,7 @@ class Compiler {
 		if (expression.type === 'printInstruction') return this.compilePrintInstruction(expression);
 		if (expression.type === 'syscallInstruction') return this.compileSyscallInstruction(expression);
 		if (expression.type === 'ifStatement') return this.compileIfStatement(expression);
-		
+		if (expression.type === 'returnStatement') return this.compileReturn(expression);		
 		if (expression.type === 'numberLiteral') return this.compileLiteral(expression);
 
 		throw new ParserError(

@@ -1,8 +1,5 @@
-# Heads up: this program will segfault at some point, since it's infinitely creating variables
-
-fn count (i) {
-	print i
-	count (i+1)
+fn multiply(x, y) {
+	ret x * y
 }
 
-count (0)
+print multiply(20, 10)
