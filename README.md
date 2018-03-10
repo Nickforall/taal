@@ -33,12 +33,14 @@ quick_maths()
 ```
 
 ```taal
-# Heads up: this program will segfault at some point, since it's infinitely creating variables
-
+# counts to 1000 from a given number
 fn count (i) {
 	print i
-	count (i+1)
+
+	if (i < (1000 - 1)) {
+		count (i + 1)
+	}
 }
 
-count (0)
+count(0)
 ```
