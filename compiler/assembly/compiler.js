@@ -82,13 +82,24 @@ class Compiler {
 
 		var blockIndex = this.blockIndex++;		
 
-		this.addLine(`${jmpInstruction} .__if_${blockIndex}_end`);
+		this.addLine(`${jmpInstruction} .__if_${blockIndex}_${expression.elseBlock ? 'else' : 'end'}`);
 		this.addLine(`.__if_${blockIndex}:`);
 
 		for (const blockExpression of expression.block.expressions) {
 			this.compileExpression(blockExpression);
 		}
 
+		if (expression.elseBlock) {
+			this.addLine(`jmp .__if_${blockIndex}_end`);
+			this.addLine('sub rsp, 8');	
+					
+			this.addLine(`.__if_${blockIndex}_else:`);
+
+			for (const blockExpression of expression.elseBlock.expressions) {
+				this.compileExpression(blockExpression);
+			}
+		}
+		
 		this.addLine(`.__if_${blockIndex}_end:`);
 		// I really don't know what this does tbh, but control flow is broken if i don't
 		this.addLine('sub rsp, 8');

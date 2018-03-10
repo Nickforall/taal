@@ -331,12 +331,27 @@ class Parser {
 		};
 	}
 
+	/** 
+	 * Parses an if-statement
+	 */
 	parseIf() {
 		this.skip('keyword', 'if');
 
+		const condition = this.parseExpression();
+		const block = this.parseBlock();
+
+		let elseBlock;
+
+		if (this.is('keyword', 'else')) {
+			this.skip('keyword', 'else');
+
+			elseBlock = this.parseBlock();
+		}
+
 		return {
-			condition: this.parseExpression(),
-			block: this.parseBlock(),
+			condition,
+			block,
+			elseBlock,
 			type: 'ifStatement'
 		};
 	}

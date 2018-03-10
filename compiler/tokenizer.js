@@ -95,7 +95,8 @@ class Tokenizer {
 			'mut',
 			'fn',
 			'ret',
-			'if'
+			'if',
+			'else'
 		].indexOf(id) > -1);
 	}
 

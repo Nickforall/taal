@@ -11,4 +11,6 @@ if y > 25 {
 
 if y < 25 {
 	print 300
+} else {
+	print 400
 }

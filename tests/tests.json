@@ -34,7 +34,7 @@
 		{
 			"description": "Tests some simple greater than and smaller than expressions",
 			"source": "./source/controlflow.tl",
-			"stdout": "100\n200\n"
+			"stdout": "100\n200\n400\n"
 		}
 	]
 }
