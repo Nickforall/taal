@@ -8,7 +8,7 @@ global.TAAL_START_COMPILE_DATE = Date.now();
 global.TAAL_CONFIG = {
 	debug: false,
 	preserveTemp: false,
-	skipOptimization: false
+	skipOptimization: true
 };
 
 const Taal = require('./taal');
@@ -36,7 +36,7 @@ if(process.platform !== 'darwin') {
 }
 
 global.TAAL_CONFIG.debug = program.debug;
-global.TAAL_CONFIG.skipOptimization = program.skipOptimization;
+// global.TAAL_CONFIG.skipOptimization = program.skipOptimization;
 global.TAAL_CONFIG.preserveTemp = program.temporary;
 
 Taal.compileFile(
