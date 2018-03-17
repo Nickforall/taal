@@ -236,7 +236,7 @@ class Parser {
 					type,
 					operator: token.value,
 					left,
-					right: this.maybeBinary(this.parseAtom(), rightPrecedence),
+					right: this.maybeBinary(this.parseExpression(), rightPrecedence),
 				}, precedence);
 			}
 		}
