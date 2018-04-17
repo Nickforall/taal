@@ -236,7 +236,7 @@ class Parser {
 					type,
 					operator: token.value,
 					left,
-					right: this.maybeBinary(this.parseExpression(), rightPrecedence),
+					right: this.maybeBinary(this.parseExpressionNoBinary(), rightPrecedence),
 				}, precedence);
 			}
 		}
@@ -454,6 +454,15 @@ class Parser {
 			if (atom) {
 				return this.maybeBinary(atom, 0);
 			}
+		});
+	}
+
+	/**
+	 * Parses a simple expression inside a binary (never returns binary expression)
+	 */
+	parseExpressionNoBinary() {
+		return this.maybeCall(() => {
+			return this.parseAtom();
 		});
 	}
 
