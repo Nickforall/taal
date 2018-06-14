@@ -65,8 +65,8 @@ class Tokenizer {
 		return '\n'.indexOf(this.input.peek()) > -1;
 	}
 
-	isDigit() {
-		return /[0-9]/.test(this.input.peek());
+	isDigit(ident) {
+		return /^([0-9]+)$/.test(ident || this.input.peek());
 	}
 
 	readDigit() {
@@ -82,11 +82,11 @@ class Tokenizer {
 	}
 
 	isIdentifier() {
-		return /[a-zA-Z_]/.test(this.input.peek());
+		return /[0-9a-zA-Z_]/.test(this.input.peek());
 	}
 
 	isPunctuation() {
-		return '(){};,'.indexOf(this.input.peek()) > -1;
+		return '.(){};,:'.indexOf(this.input.peek()) > -1;
 	}
 
 	isKeyword(id) {
@@ -96,7 +96,8 @@ class Tokenizer {
 			'fn',
 			'ret',
 			'if',
-			'else'
+			'else',
+			'object'
 		].indexOf(id) > -1);
 	}
 
@@ -131,7 +132,6 @@ class Tokenizer {
 
 		if (this.isString()) return this.token('stringLiteral', this.readEscaped('"'));		
 		if (this.isPunctuation()) return this.token('punctuation', this.input.next());
-		if (this.isDigit()) return this.token('numberLiteral', this.readDigit());
 		if (this.isOperator()) return this.token('operator', this.input.next());
 		if (this.isBooleanOperator()) return this.token('booleanop', this.input.next());
 		
@@ -142,6 +142,8 @@ class Tokenizer {
 				return this.token('keyword', ident);
 			} else if (this.isInstruction(ident)) {
 				return this.token('instruction', ident);
+			} else if (this.isDigit(ident)) {
+				return this.token('numberLiteral', parseInt(ident));
 			}
 
 			return this.token('identifier', ident);

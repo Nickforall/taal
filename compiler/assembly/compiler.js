@@ -2,11 +2,19 @@ const ParserError = require('../errors/parsererror');
 const X86AssemblyImage = require('./x86image');
 const X86Function = require('./function');
 const X86Syscall = require('./syscall');
-
+const fs = require('fs');
 
 class Compiler {
 	constructor(ast, module) {
 		this.script = ast;
+
+		if (global.TAAL_CONFIG.dumpJson) {
+			fs.writeFileSync(
+				process.cwd() + '/out/tmp/' + Date.now() + '.json', 
+				JSON.stringify(this.script, null, 2)
+			);
+		}
+
 		this.module = module;
 		this.image = new X86AssemblyImage();
 
@@ -123,7 +131,7 @@ class Compiler {
 			f.addLine('sub rsp, 16');
 		}
 
-		f.addLine(`sub rsp, ${expression.varsize}`);
+		if(expression.varsize) f.addLine(`sub rsp, ${expression.varsize}`);
 
 		const abiRegs = [
 			'rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9'
@@ -140,7 +148,7 @@ class Compiler {
 					f.addLine('pop rax');
 					src = 'rax';
 				}
-
+				
 				f.addLine(`mov [rbp-${this.currentFunctionExpression.varsize - offset}], ${src}`);
 			}
 		}
@@ -167,14 +175,33 @@ class Compiler {
 	compileAssign(assign) {
 		this.compileExpression(assign.right);
 
-		var offset = this.currentFunctionExpression.variables.find(x => x.name === assign.left.value).offset;
+		const varDef = this.currentFunctionExpression.variables.find(x => x.name === assign.left.value);
+		const offset = this.compileOffset(assign.left, varDef, true);
 
 		this.addLine('pop rdx');
 		this.addLine(`mov [rbp-${this.currentFunctionExpression.varsize - offset}], rdx`);
 	}
 
+	compileOffset(expression, variableDefinition, isAssignment) {
+		let offset = variableDefinition.offset;
+
+		if (expression.child && variableDefinition.addition) {
+			let identifier = variableDefinition.addition.object.properties.find(
+				x => x.name.value == expression.child.value
+			);
+
+			offset += identifier.offset;
+		}
+
+		return offset;
+	}
+
 	compileIdentifier(expression) {
-		var offset = this.currentFunctionExpression.variables.find(x => x.name === expression.value).offset;		
+		var variableDefinition = this.currentFunctionExpression.variables.find(
+			x => x.name === expression.value
+		);
+		let offset = this.compileOffset(expression, variableDefinition, false);
+
 		// so i couldn't do `push dword [rbp-offset]`, this is the best i could do...
 		this.addLine(`mov rdx, [rbp-${this.currentFunctionExpression.varsize - offset}]`);
 		this.addLine('push rdx');	
@@ -219,6 +246,9 @@ class Compiler {
 		if (expression.type === 'ifStatement') return this.compileIfStatement(expression);
 		if (expression.type === 'returnStatement') return this.compileReturn(expression);		
 		if (expression.type === 'numberLiteral') return this.compileLiteral(expression);
+
+		if (expression.type === 'objectDefinition') return;
+		if (expression.type === 'binding') return;
 
 		throw new ParserError(
 			'E0005',

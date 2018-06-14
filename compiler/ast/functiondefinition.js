@@ -2,31 +2,32 @@ const SyntaxTreeNode = require('./node');
 
 class FunctionDefinition extends SyntaxTreeNode {
 	constructor(name) {
-		super();
+		super('function');
 
 		this.name = name;
 		this.variables = [];
 		this.expressions = [];
-		this.arguments = [];
+		this.args = [];
 		this.argsize = -1;
-		this.size = 0;
+		this.varsize = 0;
 	}
 
 	/**
 	 * Adds variable information to the function's scope if it doesn't exist yet
 	 * @param {String} name 
 	 * @param {Number} sizeof 
+	 * @param {Object} addition
 	 */
-	addVariable(name, sizeof) {
+	addVariable(name, bytesize, addition) {
 		if (this.variables.find((x) => x.name === name)) return;
-
 		this.variables.push({
 			name,
-			offset: this.size,
-			bytesize: sizeof
+			offset: this.varsize,
+			bytesize,
+			addition
 		});
 
-		this.size += sizeof;		
+		this.varsize += bytesize;		
 	}
 
 	/**
@@ -35,9 +36,9 @@ class FunctionDefinition extends SyntaxTreeNode {
 	 * @param {Number} sizeof 
 	 */
 	addArgument(name, sizeof) {
-		if (this.arguments.find((x) => x.name === name)) return;
+		if (this.args.find((x) => x.name === name)) return;
 		
-		this.arguments.push({
+		this.args.push({
 			name,
 			index: ++this.argsize,
 			bytesize: sizeof
@@ -54,20 +55,11 @@ class FunctionDefinition extends SyntaxTreeNode {
 		this.expressions = block.expressions;
 	}
 
-	/**
-	 * Returns a js object that represents this function
-	 * @returns {Object}
-	 */
-	serialize() {
-		return {
-			type: 'functionDefinition',
-			variables: this.variables,
-			varsize: this.size,
-			args: this.arguments,
-			name: this.name,
-			namespace: [],
-			expressions: this.expressions,
-		};
+	toJSON() {
+		const obj = { ...this };
+		delete obj.argsize;
+
+		return obj;
 	}
 }
 

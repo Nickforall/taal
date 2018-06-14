@@ -1,1 +1,1 @@
-node index.js examples/flow.tl --skip-optimization $1 && ./out/executable
+node index.js examples/obj.tl --skip-optimization $1 && ./out/executable

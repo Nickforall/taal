@@ -8,7 +8,8 @@ global.TAAL_START_COMPILE_DATE = Date.now();
 global.TAAL_CONFIG = {
 	debug: false,
 	preserveTemp: false,
-	skipOptimization: true
+	skipOptimization: true,
+	dumpJson: false
 };
 
 const Taal = require('./taal');
@@ -20,14 +21,14 @@ program.version('0.1.0')
 	.usage('[options] <file>')
 	.option('-o, --output [name]', 'Output file name')
 	.option('-d, --debug', 'Whether we push all kinds of gibberish to stdout when compiling')
-	.option('-t, --temporary', 'Preverses the temporary assembly files')
+	.option('-t, --temporary', 'Preserves the temporary assembly files')
+	.option('-j, --json-dump', 'Dumps json of AST into tmp')
 	.option('--skip-optimization', 'Skips optimization steps')	
 	.parse(process.argv);
 
 if(program.args.length < 1) {
 	console.log(chalk.red('No file given.'));
 	process.exit(1);
-	return;
 }
 
 if(process.platform !== 'darwin') {
@@ -38,6 +39,7 @@ if(process.platform !== 'darwin') {
 global.TAAL_CONFIG.debug = program.debug;
 // global.TAAL_CONFIG.skipOptimization = program.skipOptimization;
 global.TAAL_CONFIG.preserveTemp = program.temporary;
+global.TAAL_CONFIG.dumpJson = program.jsonDump;
 
 Taal.compileFile(
 	path.join(process.cwd(), program.args[0]), 

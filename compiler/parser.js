@@ -1,5 +1,8 @@
 const ParserError = require('./errors/parsererror');
 const FunctionDefinition = require('./ast/functiondefinition');
+const ObjectDefinition = require('./ast/objectdefinition');
+
+const TypeStore = require('./typestore');
 
 const PRECEDENCE = {
 	'=': 1,
@@ -19,6 +22,7 @@ class Parser {
 		this.main = new FunctionDefinition('start');
 		this.currentFunction = null;
 		this.functions = [];
+		this.typestore = new TypeStore();
 
 		if (global.TAAL_CONFIG.debug) console.log(tokens);
 	}
@@ -50,16 +54,6 @@ class Parser {
 	}
 
 	/**
-	 * Returns the next token without the position object and moves the cursor 
-	 */
-	nextClean() {
-		let next = Object.assign({}, this.next());
-		delete next.position;
-
-		return next;
-	}
-
-	/**
 	 * Returns the next token without moving the cursor
 	 */
 	peek() {
@@ -82,27 +76,6 @@ class Parser {
 				this.peek().position.line, 
 				this.peek().position.column, 
 				this.peek(),
-				this.module
-			);
-		}
-	}
-
-	/**
-	 * Nexts w/o position if match, errors otherwise
-	 * @param {String} type 
-	 * @param {String} val 
-	 */
-	nextCleanIf(type, val) {
-		if (this.is(type, val)) {
-			return this.nextClean();
-		} else {
-			throw new ParserError(
-				'E0002',
-				'UnexpectedToken',
-				`Unexpected token ${this.peek().value}, expected: '${val}'`, 
-				this.peek().position.line, 
-				this.peek().position.column, 
-				null,
 				this.module
 			);
 		}
@@ -274,7 +247,7 @@ class Parser {
 		}
 
 		// the function expression
-		this.currentFunction = new FunctionDefinition(this.nextCleanIf('identifier').value);
+		this.currentFunction = new FunctionDefinition(this.next('identifier').value);
 
 		if (this.is('punctuation', '(')) {
 			var args = this.delimited('(', ')', ',', this.parseExpression.bind(this));
@@ -296,13 +269,13 @@ class Parser {
 		// parse the block
 		this.currentFunction.setBlock(this.parseBlock());
 
-		// copy local
-		var functionObject = this.currentFunction.serialize();
+		// move to local variable
+		var functionObject = this.currentFunction;
 
-		// set back to null
+		// set global back to null
 		this.currentFunction = null;
 
-		// return the currentFunction
+		// return the local
 		return functionObject;
 	}
 
@@ -412,6 +385,121 @@ class Parser {
 		};
 	}
 
+	/**
+	 * Parses an object definition
+	 */
+	parseObject() {
+
+		this.nextIf('keyword', 'object');
+		const name = this.next('identifier');
+		this.skip('punctuation', '{');
+
+		const definition = new ObjectDefinition(name);
+		let methods = [];
+
+		while (!this.is('punctuation', '}')) {
+			if (this.is('identifier')) {
+				let prop = this.parseObjectProperty();
+				definition.createProperty(prop.name, prop.type.size);
+				continue;
+			}
+
+			if (this.is('keyword', 'fn')) {
+				methods.push(this.parseFunction());
+				continue;
+			}
+
+			throw new ParserError(
+				'E0002',
+				'UnexpectedToken',
+				`Unexpected token ${this.peek().value}, expected an identifier or function`, 
+				this.peek().position.line, 
+				this.peek().position.column, 
+				this.peek(),
+				this.module
+			);
+		}
+
+		this.skip('punctuation', '}');
+
+		var node = definition;
+
+		this.typestore.addDefinition(name, node, definition.size);
+
+		return node;
+	}
+
+	/**
+	 * Parses a property in an object definition
+	 */
+	parseObjectProperty() {
+		let propertyObject = {
+			name: this.next(),
+		};
+
+		this.skip('punctuation', ':');
+
+		let typeName = this.nextIf('identifier').value;
+		propertyObject.type = this.typestore.getDefinition(typeName);
+
+		return propertyObject;
+	}
+
+	/**
+	 * Parses a `let` expression
+	 */
+	parseBinding() {
+		this.nextIf('keyword', 'let');
+
+		let bindingObject = {
+			type: 'binding',
+			name: this.parseIdentifier(),
+		};
+
+		if (this.is('punctuation', ':')) {
+			bindingObject.valueType = this.parseBindingValueType();
+		}
+
+		// TODO: optimize
+		if (this.currentFunction !== null) {
+			this.currentFunction.addVariable(
+				bindingObject.name.value, 
+				bindingObject.valueType.size,
+				bindingObject.valueType
+			);
+		} else {			
+			this.main.addVariable(
+				bindingObject.name.value, 
+				bindingObject.valueType.size,
+				bindingObject.valueType				
+			);
+		}
+
+		return bindingObject;
+	}
+
+	/**
+	 * Parses the type of a let expression
+	 */
+	parseBindingValueType() {
+		this.nextIf('punctuation', ':');
+
+		return this.typestore.getDefinition(this.nextIf('identifier'));
+	}
+
+	/**
+	 * Parses an identifier
+	 */
+	parseIdentifier() {
+		const ident = this.next('identifier');
+		if (this.is('punctuation', '.')) {
+			this.skip('punctuation', '.');
+			ident.child = this.parseIdentifier();
+		}
+
+		return ident;
+	}
+
 	/** 
 	 * Parses some part of code
 	 */
@@ -421,7 +509,9 @@ class Parser {
 			return;
 		}
 
+		if (this.is('keyword', 'object')) return this.parseObject();
 		if (this.is('keyword', 'if')) return this.parseIf();
+		if (this.is('keyword', 'let')) return this.parseBinding();
 
 		// parse binary within parenthesis first, because math
 		if (this.is('punctuation', '(')) return this.parseParenthesisBinary();
@@ -429,10 +519,10 @@ class Parser {
 		if (this.is('instruction', 'syscall')) return this.parseSyscallInstruction();
 					
 		if (this.is('keyword', 'ret')) return this.parseReturn();
+		if (this.is('identifier')) return this.parseIdentifier();
 
 		let peek = this.peek();
-		if (peek.type === 'numberLiteral') return this.nextClean();
-		if (peek.type === 'identifier') return this.nextClean();
+		if (peek.type === 'numberLiteral') return this.next();
 
 		throw new ParserError(
 			'E0002',
@@ -494,7 +584,7 @@ class Parser {
 			expressions: mainFunctionBlock
 		});
 
-		let fObj = this.main.serialize();
+		let fObj = this.main;
 		fObj.isEntry = true;
 
 		this.functions.unshift(fObj);

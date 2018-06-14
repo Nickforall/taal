@@ -14,6 +14,9 @@ class ParserError extends Error {
 
 		if (this.module) {
 			this.source = fs.readFileSync(this.module).toString('utf8');
+		} else {
+			this.module = '';
+			this.source = '';
 		}
 	}
 

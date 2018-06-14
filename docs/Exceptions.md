@@ -126,3 +126,7 @@ You are not allowed to nest named functions... at 3:8 in exctest.tl
 004|    fn test {
         ^^
 ```
+
+## E0008 (TypeRedefinitionError)
+
+## E0009 (UndefinedTypeError)

@@ -1,4 +1,11 @@
 module.exports = {
+    "parserOptions": {
+        "ecmaVersion": 8,
+        "ecmaFeatures": {
+          "experimentalObjectRestSpread": true
+        },
+        "sourceType": "module"
+    },
     "env": {
         "node": true,
         "es6": true
